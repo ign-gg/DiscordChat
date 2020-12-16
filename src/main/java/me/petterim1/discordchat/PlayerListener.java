@@ -43,7 +43,7 @@ public class PlayerListener implements Listener {
             if (message.equals(lastMessage) && name.equals(lastName)) return;
             lastMessage = message;
             lastName = name;
-            message = message.replace("@", "[at]");
+            message = message.replace("@", "[at]").replaceAll("(?i)http:", "").replaceAll("(?i)https:", "");
         }
         API.sendMessage(TextFormat.clean(Loader.config.getString("minecraftToDiscordChatFormatting")).replace("%timestamp%", new Date(System.currentTimeMillis()).toString()).replace("%username%", name).replace("%displayname%", e.getPlayer().getDisplayName()).replace("%message%", message));
     }
