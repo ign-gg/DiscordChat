@@ -70,8 +70,7 @@ public class Loader extends PluginBase {
             if (config.getBoolean("startMessages")) API.sendMessage(config.getString("status_server_started"));
             if (debug) getServer().getLogger().info("Startup done successfully");
         } catch (Exception e) {
-            getLogger().error("Couldn't enable DiscordChat. Enable debug mode for more info.");
-            if (debug) e.printStackTrace();
+            getLogger().error("Couldn't enable DiscordChat", e);
         }
     }
 
