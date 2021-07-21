@@ -15,6 +15,8 @@ import java.util.UUID;
 
 public class DiscordChatListener extends ListenerAdapter {
 
+    static MessageHandler messageHandler;
+
     @Override
     public void onGuildMessageReceived(GuildMessageReceivedEvent e) {
         if (e.getMember() == null || Loader.jda == null || e.getAuthor().equals(Loader.jda.getSelfUser())) return;
@@ -32,13 +34,17 @@ public class DiscordChatListener extends ListenerAdapter {
         String name = TextFormat.clean(e.getMember().getEffectiveName()).replace("§", "?").replace("%message%", "?");
         String role = "";
         if (getRole(e.getMember()) != null) role = getRole(getRole(e.getMember()));
-        String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%timestamp%", new Date(System.currentTimeMillis()).toString()).replace("%discordname%", name).replace("%message%", message);
-        if (Loader.config.getBoolean("enableMessagesToConsole")) {
-            Server.getInstance().broadcastMessage(out);
-        } else {
-            for (Player player : Server.getInstance().getOnlinePlayers().values()) {
-                player.sendMessage(out);
+        if (messageHandler == null) {
+            String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%timestamp%", new Date(System.currentTimeMillis()).toString()).replace("%discordname%", name).replace("%message%", message);
+            if (Loader.config.getBoolean("enableMessagesToConsole")) {
+                Server.getInstance().broadcastMessage(out);
+            } else {
+                for (Player player : Server.getInstance().getOnlinePlayers().values()) {
+                    player.sendMessage(out);
+                }
             }
+        } else {
+            messageHandler.handle(role, new Date(System.currentTimeMillis()).toString(), name, message);
         }
     }
 

@@ -7,6 +7,10 @@ import net.dv8tion.jda.api.entities.TextChannel;
 
 public class API {
 
+    public static void setMessageHandler(MessageHandler handler) {
+        DiscordChatListener.messageHandler = handler;
+    }
+
     public static void sendMessage(String message) {
         sendMessage(Loader.channelId, message);
     }

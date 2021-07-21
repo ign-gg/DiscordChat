@@ -32,7 +32,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onChat(PlayerChatEvent e) {
-        if (!Loader.config.getBoolean("enableMinecraftToDiscord")) return;
+        if (DiscordChatListener.messageHandler != null || !Loader.config.getBoolean("enableMinecraftToDiscord")) return;
         String message = e.getMessage();
         String name = e.getPlayer().getName();
         if (Loader.config.getBoolean("spamFilter")) {
