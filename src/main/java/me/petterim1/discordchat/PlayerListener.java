@@ -43,7 +43,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onChat(PlayerChatEvent e) {
-        if (!Loader.config.getBoolean("enableMinecraftToDiscord")) {
+        if (DiscordChatListener.messageHandler != null || !Loader.config.getBoolean("enableMinecraftToDiscord")) {
             return;
         }
         String message = e.getMessage();

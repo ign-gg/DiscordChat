@@ -16,6 +16,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DiscordChatListener extends ListenerAdapter {
 
+    /**
+     * For IGNChat
+     */
+    static MessageHandler messageHandler;
+
     static final List<String> chatMuted = new CopyOnWriteArrayList<>();
     static final List<DiscordChatReceiver> receivers = new ArrayList<>();
 
@@ -38,14 +43,18 @@ public class DiscordChatListener extends ListenerAdapter {
         }
         String name = TextFormat.clean(e.getMember().getEffectiveName()).replace("§", "?").replace("%message%", "?");
         String role = getColoredRole(getRole(e.getMember()));
-        String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%timestamp%", new Date(System.currentTimeMillis()).toString()).replace("%discordname%", name).replace("%message%", message);
-        for (Player player : Server.getInstance().getOnlinePlayers().values()) {
-            if (!chatMuted.contains(player.getName())) {
-                player.sendMessage(out);
+        if (messageHandler == null) {
+            String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%timestamp%", new Date(System.currentTimeMillis()).toString()).replace("%discordname%", name).replace("%message%", message);
+            for (Player player : Server.getInstance().getOnlinePlayers().values()) {
+                if (!chatMuted.contains(player.getName())) {
+                    player.sendMessage(out);
+                }
             }
-        }
-        if (Loader.config.getBoolean("enableMessagesToConsole")) {
-            Server.getInstance().getLogger().info(out);
+            if (Loader.config.getBoolean("enableMessagesToConsole")) {
+                Server.getInstance().getLogger().info(out);
+            }
+        } else {
+            messageHandler.handle(role, new Date(System.currentTimeMillis()).toString(), name, message);
         }
     }
 

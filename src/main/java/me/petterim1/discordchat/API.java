@@ -10,6 +10,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class API {
 
     /**
+     * For IGNChat
+     */
+    @SuppressWarnings("unused")
+    public static void setMessageHandler(MessageHandler handler) {
+        DiscordChatListener.messageHandler = handler;
+    }
+
+    /**
      * Send a message to the default channel on Discord.
      * @param message Message
      */
