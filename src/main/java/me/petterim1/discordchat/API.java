@@ -13,7 +13,7 @@ public class API {
      */
     @SuppressWarnings("unused")
     public static void setMessageHandler(MessageHandler handler) {
-        DiscordChatListener.messageHandler = handler;
+        DiscordListener.messageHandler = handler;
     }
 
     /**
