@@ -58,9 +58,15 @@ public class DiscordListener extends ListenerAdapter {
         }
     }
 
-     private boolean processDiscordCommand(String m) {
+    private static long lastListCommand;
+    private static long lastIpCommand;
+
+    private boolean processDiscordCommand(String m) {
         String prefix = Loader.config.getString("commandPrefix");
         if (Loader.config.getBoolean("playerListCommand") && m.equalsIgnoreCase(prefix + "playerlist")) {
+            long time = System.currentTimeMillis();
+            if (time - lastListCommand < 1000) return true;
+            lastListCommand = time;
             Map<UUID, Player> playerList = Server.getInstance().getOnlinePlayers();
             if (playerList.isEmpty()) {
                 API.sendMessage(Loader.config.getString("command_playerlist_empty"));
@@ -84,6 +90,9 @@ public class DiscordListener extends ListenerAdapter {
             }
             return true;
         } else if (Loader.config.getBoolean("ipCommand") && m.equalsIgnoreCase(prefix + "ip")) {
+            long time = System.currentTimeMillis();
+            if (time - lastIpCommand < 1000) return true;
+            lastIpCommand = time;
             API.sendMessage("```\n" + Loader.config.getString("commands_ip_address") + ' ' + Loader.config.getString("serverIp") + '\n' + Loader.config.getString("commands_ip_port") + ' ' + Loader.config.getString("serverPort") + "\n```");
             return true;
         }
