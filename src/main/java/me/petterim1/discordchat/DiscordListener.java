@@ -24,6 +24,9 @@ public class DiscordListener extends ListenerAdapter {
     static final List<String> chatMuted = new CopyOnWriteArrayList<>();
     static final List<DiscordChatReceiver> receivers = new ArrayList<>();
 
+    private static String lastMessage;
+    private static long lastMessageTime;
+
     @Override
     public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent e) {
         if (e.getMember() == null || Loader.jda == null || e.getAuthor().equals(Loader.jda.getSelfUser())) return;
@@ -32,13 +35,24 @@ public class DiscordListener extends ListenerAdapter {
         }
         if (!e.getChannel().getId().equals(Loader.channelId)) return;
         if (e.getAuthor().isBot() && !Loader.config.getBoolean("allowBotMessages")) return;
-        String message = TextFormat.clean(e.getMessage().getContentStripped(), true);
+        String message = e.getMessage().getContentStripped();
+        int maxLength = Loader.config.getInt("maxMessageLength");
+        if (message.length() > maxLength) message = message.substring(0, maxLength);
+        message = TextFormat.clean(message, true);
         if (message.trim().isEmpty()) return;
-        if (processDiscordCommand(message)) return;
+        long time = System.currentTimeMillis();
+        if (processDiscordCommand(message, time)) return;
         if (!Loader.config.getBoolean("enableDiscordToMinecraft")) return;
-        if (message.length() > Loader.config.getInt("maxMessageLength")) message = message.substring(0, Loader.config.getInt("maxMessageLength"));
-        String name = TextFormat.clean(e.getMember().getEffectiveName(), true);
+        String name = e.getMember().getEffectiveName();
+        if (name.length() > maxLength) name = name.substring(0, maxLength);
+        name = TextFormat.clean(name, true);
         if (Loader.config.getBoolean("spamFilter")) {
+            if (time - lastMessageTime < 2000 && message.equals(lastMessage)) {
+                lastMessageTime = time;
+                return;
+            }
+            lastMessage = message;
+            lastMessageTime = time;
             message = message
                     .replaceAll("\\r\\n|\\r|\\n", " ")
                     .replaceAll("[\\uE000-\\uE0EA\\n]", "?")
@@ -51,7 +65,7 @@ public class DiscordListener extends ListenerAdapter {
         }
         String role = getColoredRole(getRole(e.getMember()));
         if (messageHandler == null) {
-            String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%timestamp%", new Date(System.currentTimeMillis()).toString()).replace("%discordname%", name).replace("%message%", message);
+            String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%timestamp%", new Date(time).toString()).replace("%discordname%", name).replace("%message%", message);
             for (Player player : Server.getInstance().getOnlinePlayers().values()) {
                 if (!chatMuted.contains(player.getName())) {
                     player.sendMessage(out);
@@ -61,18 +75,17 @@ public class DiscordListener extends ListenerAdapter {
                 Server.getInstance().getLogger().info(out);
             }
         } else {
-            messageHandler.handle(role, new Date(System.currentTimeMillis()).toString(), name, message);
+            messageHandler.handle(role, new Date(time).toString(), name, message);
         }
     }
 
     private static long lastListCommand;
     private static long lastIpCommand;
 
-    private boolean processDiscordCommand(String m) {
+    private boolean processDiscordCommand(String m, long time) {
         String prefix = Loader.config.getString("commandPrefix");
         if (Loader.config.getBoolean("playerListCommand") && m.equalsIgnoreCase(prefix + "playerlist")) {
-            long time = System.currentTimeMillis();
-            if (time - lastListCommand < 1000) return true;
+            if (time - lastListCommand < 2000) return true;
             lastListCommand = time;
             Map<UUID, Player> playerList = Server.getInstance().getOnlinePlayers();
             if (playerList.isEmpty()) {
@@ -97,8 +110,7 @@ public class DiscordListener extends ListenerAdapter {
             }
             return true;
         } else if (Loader.config.getBoolean("ipCommand") && m.equalsIgnoreCase(prefix + "ip")) {
-            long time = System.currentTimeMillis();
-            if (time - lastIpCommand < 1000) return true;
+            if (time - lastIpCommand < 2000) return true;
             lastIpCommand = time;
             API.sendMessage("```\n" + Loader.config.getString("commands_ip_address") + ' ' + Loader.config.getString("serverIp") + '\n' + Loader.config.getString("commands_ip_port") + ' ' + Loader.config.getString("serverPort") + "\n```");
             return true;
