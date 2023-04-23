@@ -33,11 +33,11 @@ public class PlayerListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent e) {
         if (Loader.config.getBoolean("deathMessages")) {
-            if (Loader.config.getBoolean("spamFilter")) {
+            //if (Loader.config.getBoolean("spamFilter")) {
                 API.sendMessage(Loader.config.getString("info_player_death").replace("%death_message%", TextFormat.clean(textFromContainer(e.getDeathMessage()).replace("@", "[at]").replaceAll("(?i)https:", "").replaceAll("(?i)http:", "").replace("discord.gg", ""))));
-            } else {
-                API.sendMessage(Loader.config.getString("info_player_death").replace("%death_message%", TextFormat.clean(textFromContainer(e.getDeathMessage()))));
-            }
+            //} else {
+            //    API.sendMessage(Loader.config.getString("info_player_death").replace("%death_message%", TextFormat.clean(textFromContainer(e.getDeathMessage()))));
+            //}
         }
     }
 
@@ -48,10 +48,14 @@ public class PlayerListener implements Listener {
         }
         String message = e.getMessage();
         String name = e.getPlayer().getName();
-        if (Loader.config.getBoolean("spamFilter")) {
+        //if (Loader.config.getBoolean("spamFilter")) {
             message = message.replace("@", "[at]").replaceAll("(?i)https:", "").replaceAll("(?i)http:", "");
+        //}
+        if (Loader.config.getBoolean("useInGameFormat")) {
+            API.sendMessage(TextFormat.clean(e.getFormat()));
+        } else {
+            API.sendMessage(TextFormat.clean(Loader.config.getString("minecraftToDiscordChatFormatting")).replace("%username%", name).replace("%message%", message));
         }
-        API.sendMessage(TextFormat.clean(Loader.config.getString("minecraftToDiscordChatFormatting")).replace("%timestamp%", new Date(System.currentTimeMillis()).toString()).replace("%username%", name).replace("%displayname%", e.getPlayer().getDisplayName()).replace("%message%", message));
     }
 
     private static String textFromContainer(TextContainer container) {

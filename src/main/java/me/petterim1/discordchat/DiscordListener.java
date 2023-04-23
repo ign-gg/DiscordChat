@@ -46,7 +46,7 @@ public class DiscordListener extends ListenerAdapter {
         String name = e.getMember().getEffectiveName();
         if (name.length() > maxLength) name = name.substring(0, maxLength);
         name = TextFormat.clean(name, true);
-        if (Loader.config.getBoolean("spamFilter")) {
+        //if (Loader.config.getBoolean("spamFilter")) {
             if (time - lastMessageTime < 2000 && message.equals(lastMessage)) {
                 lastMessageTime = time;
                 return;
@@ -62,10 +62,10 @@ public class DiscordListener extends ListenerAdapter {
                     .replaceAll("\\r\\n|\\r|\\n", "?")
                     .replaceAll("[\\uE000-\\uE0EA\\n]", "?")
                     .replace("ঋ", "?").replace("ༀ", "?").replace("", "?");
-        }
+        //}
         String role = getColoredRole(getRole(e.getMember()));
         if (messageHandler == null) {
-            String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%timestamp%", new Date(time).toString()).replace("%discordname%", name).replace("%message%", message);
+            String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%discordname%", name).replace("%message%", message);
             for (Player player : Server.getInstance().getOnlinePlayers().values()) {
                 if (!chatMuted.contains(player.getName())) {
                     player.sendMessage(out);
