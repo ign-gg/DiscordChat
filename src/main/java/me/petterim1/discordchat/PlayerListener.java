@@ -12,8 +12,6 @@ import cn.nukkit.lang.TextContainer;
 import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.utils.TextFormat;
 
-import java.util.Date;
-
 public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -32,7 +30,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent e) {
-        if (Loader.config.getBoolean("deathMessages")) {
+        if (e.isDeathMessageBroadcast() && Loader.config.getBoolean("deathMessages")) {
             //if (Loader.config.getBoolean("spamFilter")) {
                 API.sendMessage(Loader.config.getString("info_player_death").replace("%death_message%", TextFormat.clean(textFromContainer(e.getDeathMessage()).replace("@", "[at]").replaceAll("(?i)https:", "").replaceAll("(?i)http:", "").replace("discord.gg", ""))));
             //} else {
