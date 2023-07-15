@@ -29,22 +29,38 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent e) {
-        if (e.getMember() == null || Loader.jda == null || e.getAuthor().equals(Loader.jda.getSelfUser())) return;
+        if (e.getMember() == null || Loader.jda == null || e.getAuthor().equals(Loader.jda.getSelfUser())) {
+            return;
+        }
         for (DiscordChatReceiver receiver : receivers) {
             receiver.receive(e);
         }
-        if (!e.getChannel().getId().equals(Loader.channelId)) return;
-        if (e.getAuthor().isBot() && !Loader.config.getBoolean("allowBotMessages")) return;
+        if (!e.getChannel().getId().equals(Loader.channelId)) {
+            return;
+        }
+        if (e.getAuthor().isBot() && !Loader.config.getBoolean("allowBotMessages")) {
+            return;
+        }
         String message = e.getMessage().getContentStripped();
         int maxLength = Loader.config.getInt("maxMessageLength");
-        if (message.length() > maxLength) message = message.substring(0, maxLength);
+        if (message.length() > maxLength) {
+            message = message.substring(0, maxLength);
+        }
         message = TextFormat.clean(message, true);
-        if (message.trim().isEmpty()) return;
+        if (message.trim().isEmpty()) {
+            return;
+        }
         long time = System.currentTimeMillis();
-        if (processDiscordCommand(message, time)) return;
-        if (!Loader.config.getBoolean("enableDiscordToMinecraft")) return;
+        if (processDiscordCommand(message, time)) {
+            return;
+        }
+        if (!Loader.config.getBoolean("enableDiscordToMinecraft")) {
+            return;
+        }
         String name = e.getMember().getEffectiveName();
-        if (name.length() > maxLength) name = name.substring(0, maxLength);
+        if (name.length() > maxLength) {
+            name = name.substring(0, maxLength);
+        }
         name = TextFormat.clean(name, true);
         //if (Loader.config.getBoolean("spamFilter")) {
             if (time - lastMessageTime < 2000 && message.equals(lastMessage)) {
@@ -57,7 +73,9 @@ public class DiscordListener extends ListenerAdapter {
                     .replaceAll("\\r\\n|\\r|\\n", " ")
                     .replaceAll("[\\uE000-\\uE0EA\\n]", "?")
                     .replace("ঋ", "?").replace("ༀ", "?").replace("", "?");
-            if (message.trim().isEmpty()) return;
+            if (message.trim().isEmpty()) {
+                return;
+            }
             name = name
                     .replaceAll("\\r\\n|\\r|\\n", "?")
                     .replaceAll("[\\uE000-\\uE0EA\\n]", "?")
@@ -104,7 +122,9 @@ public class DiscordListener extends ListenerAdapter {
                     players.add(playerName);
                 }
                 playerListMessage += players.toString();
-                if (playerListMessage.length() > 1996) playerListMessage = playerListMessage.substring(0, 1993) + "...";
+                if (playerListMessage.length() > 1996) {
+                    playerListMessage = playerListMessage.substring(0, 1993) + "...";
+                }
                 playerListMessage += "\n```";
                 API.sendMessage(playerListMessage);
             }
@@ -126,7 +146,9 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private static String getColoredRole(Role r) {
-        if (r == null) return "";
+        if (r == null) {
+            return "";
+        }
         Color color = r.getColor();
         if (color == null) {
             return TextFormat.WHITE + r.getName();
