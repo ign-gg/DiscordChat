@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DiscordListener extends ListenerAdapter {
 
@@ -21,7 +21,7 @@ public class DiscordListener extends ListenerAdapter {
      */
     static MessageHandler messageHandler;
 
-    static final List<String> chatMuted = new CopyOnWriteArrayList<>();
+    static final Set<String> chatMuted = ConcurrentHashMap.newKeySet();
     static final List<DiscordChatReceiver> receivers = new ArrayList<>();
 
     private static String lastMessage;
