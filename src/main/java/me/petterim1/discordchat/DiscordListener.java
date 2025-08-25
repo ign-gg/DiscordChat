@@ -13,6 +13,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class DiscordListener extends ListenerAdapter {
 
@@ -23,6 +24,7 @@ public class DiscordListener extends ListenerAdapter {
 
     static final Set<String> chatMuted = ConcurrentHashMap.newKeySet();
     static final List<DiscordChatReceiver> receivers = new ArrayList<>();
+    private static final Pattern newline = Pattern.compile("\\r\\n|\\r|\\n");
 
     private static String lastMessage;
     private static long lastMessageTime;
@@ -41,12 +43,7 @@ public class DiscordListener extends ListenerAdapter {
         if (e.getAuthor().isBot() && !Loader.config.getBoolean("allowBotMessages")) {
             return;
         }
-        String message = e.getMessage().getContentStripped();
-        int maxLength = Loader.config.getInt("maxMessageLength");
-        if (message.length() > maxLength) {
-            message = message.substring(0, maxLength);
-        }
-        message = TextFormat.clean(message, true);
+        String message = TextFormat.clean(e.getMessage().getContentStripped(), true);
         if (message.trim().isEmpty()) {
             return;
         }
@@ -57,33 +54,28 @@ public class DiscordListener extends ListenerAdapter {
         if (!Loader.config.getBoolean("enableDiscordToMinecraft")) {
             return;
         }
-        String name = e.getMember().getEffectiveName();
-        if (name.length() > maxLength) {
-            name = name.substring(0, maxLength);
-        }
-        name = TextFormat.clean(name, true);
-        //if (Loader.config.getBoolean("spamFilter")) {
+        if (!Server.sbpeTweaks) {
             if (time - lastMessageTime < 2000 && message.equals(lastMessage)) {
                 lastMessageTime = time;
                 return;
             }
             lastMessage = message;
             lastMessageTime = time;
-            message = message
-                    .replaceAll("\\r\\n|\\r|\\n", " ")
-                    .replaceAll("[\\uE000-\\uE0EA\\n]", "?")
-                    .replace("ঋ", "?").replace("ༀ", "?").replace("", "?");
-            if (message.trim().isEmpty()) {
-                return;
-            }
-            name = name
-                    .replaceAll("\\r\\n|\\r|\\n", "?")
-                    .replaceAll("[\\uE000-\\uE0EA\\n]", "?")
-                    .replace("ঋ", "?").replace("ༀ", "?").replace("", "?");
-        //}
+        }
+        if (message.length() > Loader.config.getInt("maxMessageLength")) {
+            message = message.substring(0, Loader.config.getInt("maxMessageLength"));
+        }
+        message = newline.matcher(message).replaceAll(" ");
+        if (message.trim().isEmpty()) {
+            return;
+        }
         String role = getColoredRole(getRole(e.getMember()));
+        String name = TextFormat.clean(e.getMember().getEffectiveName(), true);
         if (messageHandler == null) {
-            String out = Loader.config.getString("discordToMinecraftChatFormatting").replace("%role%", role).replace("%discordname%", name).replace("%message%", message);
+            String out = Loader.config.getString("discordToMinecraftChatFormatting")
+                    .replace("%role%", role)
+                    .replace("%discordname%", name)
+                    .replace("%message%", message);
             for (Player player : Server.getInstance().getOnlinePlayers().values()) {
                 if (!chatMuted.contains(player.getName())) {
                     player.sendMessage(out);
@@ -93,7 +85,7 @@ public class DiscordListener extends ListenerAdapter {
                 Server.getInstance().getLogger().info(out);
             }
         } else {
-            messageHandler.handle(role, new Date(time).toString(), name, message);
+            messageHandler.handle(role, "", name, message);
         }
     }
 

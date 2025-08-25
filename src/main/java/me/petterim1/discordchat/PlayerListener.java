@@ -17,29 +17,36 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PlayerJoinEvent e) {
         if (Loader.config.getBoolean("joinMessages")) {
-            API.sendMessage(Loader.config.getString("info_player_joined").replace("%player%", e.getPlayer().getName()).replace("%join_message%", TextFormat.clean(textFromContainer(e.getJoinMessage()))));
+            API.sendMessage(TextFormat.clean(Loader.config.getString("info_player_joined")
+                    .replace("%player%", e.getPlayer().getName())
+                    .replace("%join_message%", textFromContainer(e.getJoinMessage())), true));
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onQuit(PlayerQuitEvent e) {
         if (Loader.config.getBoolean("quitMessages") && e.getPlayer().spawned) {
-            API.sendMessage(Loader.config.getString("info_player_left").replace("%player%", e.getPlayer().getName()).replace("%quit_message%", TextFormat.clean(textFromContainer(e.getQuitMessage()))));
+            API.sendMessage(TextFormat.clean(Loader.config.getString("info_player_left")
+                    .replace("%player%", e.getPlayer().getName())
+                    .replace("%quit_message%", textFromContainer(e.getQuitMessage())), true));
         }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent e) {
         if (e.isDeathMessageBroadcast() && Loader.config.getBoolean("deathMessages")) {
-            String msg = TextFormat.clean(textFromContainer(e.getDeathMessage()));
-            if (msg.isEmpty()) {
+            String message = TextFormat.clean(textFromContainer(e.getDeathMessage()), true)
+                    .replace("@", "[at]");
+            if (Loader.messageFilterRegex != null) {
+                message = Loader.messageFilterRegex.matcher(message)
+                        .replaceAll(Loader.config.getString("messageFilterReplacement"));
+            }
+            if (message.trim().isEmpty()) {
                 return;
             }
-            //if (Loader.config.getBoolean("spamFilter")) {
-                API.sendMessage(Loader.config.getString("info_player_death").replace("%death_message%", msg.replace("@", "[at]").replaceAll("(?i)https:", "").replaceAll("(?i)http:", "").replace("discord.gg", "")));
-            //} else {
-            //    API.sendMessage(Loader.config.getString("info_player_death").replace("%death_message%", msg);
-            //}
+            API.sendMessage(Loader.config.getString("info_player_death")
+                    .replace("%player%", e.getEntity().getName())
+                    .replace("%death_message%", message));
         }
     }
 
@@ -48,21 +55,26 @@ public class PlayerListener implements Listener {
         if (DiscordListener.messageHandler != null || !Loader.config.getBoolean("enableMinecraftToDiscord")) {
             return;
         }
-        String message = e.getMessage();
-        String name = e.getPlayer().getName();
-        //if (Loader.config.getBoolean("spamFilter")) {
-            message = message.replace("@", "[at]").replaceAll("(?i)https:", "").replaceAll("(?i)http:", "");
-        //}
-        if (Loader.config.getBoolean("useInGameFormat")) {
-            API.sendMessage(TextFormat.clean(e.getFormat()));
-        } else {
-            API.sendMessage(TextFormat.clean(Loader.config.getString("minecraftToDiscordChatFormatting")).replace("%username%", name).replace("%message%", message));
+        String message = Loader.config.getBoolean("useInGameFormat") ? e.getFormat() : e.getMessage()
+                .replace("@", "[at]");
+        if (Loader.messageFilterRegex != null) {
+            message = Loader.messageFilterRegex.matcher(message)
+                    .replaceAll(Loader.config.getString("messageFilterReplacement"));
         }
+        if (message.trim().isEmpty()) {
+            return;
+        }
+
+        API.sendMessage(TextFormat.clean(Loader.config.getString("minecraftToDiscordChatFormatting")
+                .replace("%username%", e.getPlayer().getName())
+                .replace("%displayname%", e.getPlayer().getDisplayName())
+                .replace("%message%", message), true));
     }
 
     private static String textFromContainer(TextContainer container) {
         if (container instanceof TranslationContainer) {
-            return Server.getInstance().getLanguage().translateString(container.getText(), ((TranslationContainer) container).getParameters());
+            return Server.getInstance().getLanguage()
+                    .translateString(container.getText(), ((TranslationContainer) container).getParameters());
         }
         return container.getText();
     }

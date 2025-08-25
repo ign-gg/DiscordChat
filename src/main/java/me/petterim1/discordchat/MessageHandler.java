@@ -5,5 +5,5 @@ public interface MessageHandler {
     /**
      * For IGNChat
      */
-    void handle(String role, String timestamp, String discordname, String message);
+    void handle(String role, @Deprecated String timestamp, String discordname, String message);
 }
