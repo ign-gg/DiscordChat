@@ -22,7 +22,6 @@ public class Loader extends PluginBase {
     static MessageQueue messageQueue;
     private static PlayerListener playerListener;
     static final DiscordCommandSender discordCommandSender = new DiscordCommandSender();
-    static final DiscordListener discordListener = new DiscordListener();
     static final DiscordConsoleListener discordConsoleListener = new DiscordConsoleListener();
     static Pattern messageFilterRegex;
 
@@ -65,7 +64,7 @@ public class Loader extends PluginBase {
             if (debug) {
                 getLogger().info("DEBUG: Registering events for DiscordListener");
             }
-            jda.addEventListener(discordListener);
+            jda.addEventListener(new DiscordListener());
             if (config.getBoolean("discordConsole")) {
                 consoleChannelId = config.getString("consoleChannelId", "null");
                 if (debug) {

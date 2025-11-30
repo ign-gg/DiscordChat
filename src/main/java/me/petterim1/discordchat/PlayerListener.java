@@ -64,7 +64,6 @@ public class PlayerListener implements Listener {
         if (message.trim().isEmpty()) {
             return;
         }
-
         API.sendMessage(TextFormat.clean(Loader.config.getString("minecraftToDiscordChatFormatting")
                 .replace("%username%", e.getPlayer().getName())
                 .replace("%displayname%", e.getPlayer().getDisplayName())

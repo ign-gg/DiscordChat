@@ -2,6 +2,7 @@ package me.petterim1.discordchat;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
+import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.utils.TextFormat;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -10,9 +11,12 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.text.Format;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class DiscordListener extends ListenerAdapter {
@@ -91,11 +95,12 @@ public class DiscordListener extends ListenerAdapter {
 
     private static long lastListCommand;
     private static long lastIpCommand;
+    private static long lastLookupCommand;
 
     private boolean processDiscordCommand(String m, long time) {
         String prefix = Loader.config.getString("commandPrefix");
         if (Loader.config.getBoolean("playerListCommand") && m.equalsIgnoreCase(prefix + "playerlist")) {
-            if (time - lastListCommand < 2000) return true;
+            if (time - lastListCommand < 1000) return true;
             lastListCommand = time;
             Map<UUID, Player> playerList = Server.getInstance().getOnlinePlayers();
             if (playerList.isEmpty()) {
@@ -122,12 +127,44 @@ public class DiscordListener extends ListenerAdapter {
             }
             return true;
         } else if (Loader.config.getBoolean("ipCommand") && m.equalsIgnoreCase(prefix + "ip")) {
-            if (time - lastIpCommand < 2000) return true;
+            if (time - lastIpCommand < 1000) return true;
             lastIpCommand = time;
             API.sendMessage("```\n" + Loader.config.getString("commands_ip_address") + ' ' + Loader.config.getString("serverIp") + '\n' + Loader.config.getString("commands_ip_port") + ' ' + Loader.config.getString("serverPort") + "\n```");
             return true;
+        } else if (Loader.config.getBoolean("lookupCommand") && m.startsWith(prefix + "lookup")) {
+            if (time - lastLookupCommand < 1000) return true;
+            lastLookupCommand = time;
+            String target = m.replaceFirst(prefix + "lookup", "").trim();
+            if (target.isEmpty()) {
+                API.sendMessage(Loader.config.getString("commands_lookup_usage").replace("%n", "\n"));
+                return true;
+            }
+            Player player = Server.getInstance().getPlayerExact(target);
+            CompoundTag nbt = player != null ? player.namedTag : Server.getInstance().getOfflinePlayerData(target.toLowerCase(Locale.ROOT), false);
+            if (nbt == null) {
+                API.sendMessage(Loader.config.getString("commands_lookup_unknown").replace("%n", "\n").replace("%p", target));
+            } else {
+                String name = player != null ? player.getName() : nbt.getString("NameTag");
+                API.sendMessage((player != null ? Loader.config.getString("commands_lookup_found_online") : Loader.config.getString("commands_lookup_found")).replace("%n", "\n").replace("%p", name).replace("%1", convertTime(nbt.getLong("firstPlayed"))).replace("%2", convertTime(nbt.getLong("lastPlayed"))));
+            }
+            return true;
         }
         return false;
+    }
+
+    private Format dateFormat;
+
+    DiscordListener() {
+        try {
+            dateFormat = new SimpleDateFormat(Loader.config.getString("dateFormat"));
+        } catch (Exception ex) {
+            Loader.instance.getLogger().error("Invalid dateFormat", ex);
+            dateFormat = new SimpleDateFormat();
+        }
+    }
+
+    private String convertTime(long time) {
+        return dateFormat.format(new Date(TimeUnit.SECONDS.toMillis(time)));
     }
 
     private static Role getRole(Member m) {
